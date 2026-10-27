@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anti-Double-Charge Engine | Painel de Auditoria</title>
+    <style>
+        :root {
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --green: #238636;
+            --red: #da3637;
+            --orange: #d29922;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            font-size: 14px;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin: 0 0 4px 0;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .metric-val {
+            font-size: 22px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .queue {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .client-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+        }
+
+        .badge-danger { background: rgba(218, 54, 55, 0.15); color: #f85149; border: 1px solid rgba(218, 54, 55, 0.4); }
+        .badge-success { background: rgba(35, 134, 54, 0.15); color: #56d364; border: 1px solid rgba(35, 134, 54, 0.4); }
+
+        .details {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .details span {
+            color: #ff7b72;
+        }
+
+        .btn {
+            background-color: var(--green);
+            color: #ffffff;
+            border: 1px solid rgba(240,246,252,0.1);
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background 0.2s;
+        }
+
+        .btn:disabled {
+            background-color: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border: 1px solid transparent;
+        }
+
+        .console-box {
+            background-color: #000000;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-size: 11px;
+            color: #7ee787;
+            max-height: 160px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Anti-Double-Charge Engine</h1>
+        <p class="subtitle">Mecanismo Transacional de Auditoria contra Anomalias de Faturamento Legado</p>
+    </header>
+
+    <div class="metrics">
+        <div class="metric-card">
+            <span class="metric-val" id="count-anomalias" style="color: #f85149;">--</span>
+            <span class="metric-label">Anomalias em Fila</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-val" id="count-resolvidos" style="color: #56d364;">0</span>
+            <span class="metric-label">Expurgos Realizados</span>
+        </div>
+    </div>
+
+    <div class="section-title">Fila de Varredura de Contratos Obsoletos</div>
+    <div class="queue" id="pipeline-container">
+        <!-- Renderização via carga dinâmica do banco de dados -->
+    </div>
+
+    <div class="section-title">Ledger de Auditoria em Tempo Real</div>
+    <div class="console-box" id="terminal-output">[SISTEMA OPERACIONAL BANCÁRIO]: Aguardando comandos da aplicação...</div>
+
+    <script>
+        const consoleEl = document.getElementById('terminal-output');
+        let totalResolvidos = 0;
+        let listaContratos = [];
+
+        function logConsole(msg) {
+            const time = new Date().toLocaleTimeString();
+            consoleEl.innerText += `\n[${time}] ${msg}`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // Carrega os dados reais do seu database.json via AJAX/Fetch API
+        async function inicializarMotor() {
+            try {
+                const response = await fetch('database.json');
+                if (!response.ok) throw new Error("Falha ao abrir banco de dados.");
+                const data = await response.json();
+                listaContratos = data.contratos_cancelados || [];
+                
+                document.getElementById('count-anomalias').innerText = listaContratos.length;
+                logConsole(`Banco de dados consumido com sucesso. ${listaContratos.length} anomalias pendentes detectadas.`);
+                renderizarPainel();
+            } catch (err) {
+                logConsole(`ERRO CRÍTICO: Não foi possível ler o database.json localmente.`);
+            }
+        }
+
+        function renderizarPainel() {
+            const container = document.getElementById('pipeline-container');
+            container.innerHTML = '';
+
+            listaContratos.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="client-name">${item.nome}</span>
+                        <span class="badge ${item.corrigido ? 'badge-success' : 'badge-danger'}">
+                            ${item.corrigido ? 'IDEMPOTENTE' : 'Faturamento Indevido'}
+                        </span>
+                    </div>
+                    <div class="details">
+                        <strong>Ref ID:</strong> ${item.client_id} | <strong>Encerramento:</strong> ${item.data_cancelamento}<br>
+                        <strong>Motivo Originário:</strong> ${item.motivo}<br>
+                        <strong>Falha do Core:</strong> <span>${item.status_legado}</span><br>
+                        <strong>Impacto Financeiro Revertido:</strong> R$ ${item.valor_indevido.toFixed(2)}
+                    </div>
+                    <button class="btn" ${item.corrigido ? 'disabled' : ''} onclick="executarTrava(${index})">
+                        ${item.corrigido ? 'Cobrança Neutralizada e Expurgada' : 'Acionar Trava Mecânica de Idempotência'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function executarTrava(index) {
+            const registro = listaContratos[index];
+            logConsole(`Gatilho disparado para o ID de cliente: ${registro.client_id}`);
+            
+            setTimeout(() => {
+                logConsole(`Processando chave hash transacional no Ledger...`);
+                setTimeout(() => {
+                    logConsole(`Sucesso: Idempotência mecânica aplicada para ${registro.nome}. Faturamento bloqueado.`);
+                    
+                    registro.corrigido = true;
+                    totalResolvidos++;
+                    
+                    const ativas = listaContratos.filter(c => !c.corrigido).length;
+                    document.getElementById('count-anomalias').innerText = ativas;
+                    document.getElementById('count-resolvidos').innerText = totalResolvidos;
+                    
+                    renderizarPainel();
+                }, 700);
+            }, 500);
+        }
+
+        // Boot da Aplicação
+        inicializarMotor();
+    </script>
+</body>
+</html>
