@@ -1,43 +1,32 @@
-import json
-import os
-
-DB_FILE = "database.json"
-
-def inicializar_banco():
-    if not os.path.exists(DB_FILE):
-        with open(DB_FILE, "w") as f:
-            json.dump({"transactions": []}, f)
-        print("Banco de dados simulado inicializado.")
-
-def processar_transacao(transaction_id, account_id, amount, description):
-    inicializar_banco()
-    
-    with open(DB_FILE, "r") as f:
-        data = json.load(f)
-    
-    # 🚨 MOTOR DE IDEMPOTÊNCIA: Bloqueia IDs duplicados
-    for existing_tx in data["transactions"]:
-        if existing_tx["transaction_id"] == transaction_id:
-            print(f"❌ BLOQUEADO: Cobrança dupla detectada para o ID: {transaction_id}")
-            return {"status": "Erro", "message": "Duplicado"}
-    
-    nova_transacao = {
-        "transaction_id": transaction_id,
-        "account_id": account_id,
-        "amount": amount,
-        "description": description
+{
+  "transactions": [
+    {
+      "transaction_id": "TX_9901",
+      "cliente": "Carlos Eduardo Santos",
+      "data_cancelamento": "2026-08-14",
+      "motivo_cancelamento": "Encerramento Voluntário de Conta",
+      "status_sistema_legado": "Ativo no Engine de Faturamento Mensal",
+      "valor_faturamento_indevido": 249.90,
+      "corrigido": false
+    },
+    {
+      "transaction_id": "TX_9902",
+      "cliente": "Mariana Souza Oliveira",
+      "data_cancelamento": "2026-09-02",
+      "motivo_cancelamento": "Migração de Portabilidade de Crédito",
+      "status_sistema_legado": "Flag de Cobrança Automática Ativa no Ledger",
+      "valor_faturamento_indevido": 89.90,
+      "corrigido": false
+    },
+    {
+      "transaction_id": "TX_9903",
+      "cliente": "Roberto Azevedo Lima",
+      "data_cancelamento": "2026-09-20",
+      "motivo_cancelamento": "Cancelamento por Quebra Contratual",
+      "status_sistema_legado": "Fila Batch de Cartão de Crédito Não Sincronizada",
+      "valor_faturamento_indevido": 412.00,
+      "corrigido": false
     }
-    data["transactions"].append(nova_transacao)
-    
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-        
-    print(f"✅ SUCESSO: Transação {transaction_id} processada com sucesso!")
-    return {"status": "Sucesso"}
+  ]
+}
 
-# --- ÁREA DE TESTES ---
-print("--- Teste 1: Enviando transação pela primeira vez ---")
-processar_transacao("req_123", "acc_99", 250.00, "Assinatura Mensal")
-
-print("\n--- Teste 2: Enviando o MESMO ID novamente (Simulando clique duplo) ---")
-processar_transacao("req_123", "acc_99", 250.00, "Assinatura Mensal")
