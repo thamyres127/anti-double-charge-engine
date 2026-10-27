@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launchpad do Barulho</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #66fcf1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(102, 252, 241, 0.3);
+        }
+
+        p {
+            margin-bottom: 30px;
+            color: #45a29e;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            grid-gap: 20px;
+            padding: 25px;
+            background: #1f2833;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255,255,255,0.05);
+            border: 1px solid #45a29e;
+        }
+
+        .pad {
+            height: 110px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
+            box-shadow: 0 5px #000;
+        }
+
+        .pad:active {
+            box-shadow: 0 0px #000;
+            transform: translateY(5px);
+        }
+
+        /* Cores dos Pads */
+        .kick { background: #ff0055; text-shadow: 0 0 5px #fff; }
+        .snare { background: #ff5500; text-shadow: 0 0 5px #fff; }
+        .hihat { background: #ffcc00; text-shadow: 0 0 5px #fff; }
+        .synth1 { background: #00ff55; text-shadow: 0 0 5px #fff; }
+        .synth2 { background: #00ccff; text-shadow: 0 0 5px #fff; }
+        .synth3 { background: #0055ff; text-shadow: 0 0 5px #fff; }
+        .laser { background: #b800ff; text-shadow: 0 0 5px #fff; }
+        .bass { background: #ff00b8; text-shadow: 0 0 5px #fff; }
+        .alarm { background: #39ff14; text-shadow: 0 0 5px #fff; }
+
+        /* Animação de pulso quando clica */
+        .hit {
+            filter: brightness(1.5);
+            box-shadow: 0 0 25px currentColor !important;
+        }
+
+        #visualizer {
+            margin-top: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #66fcf1;
+            height: 25px;
+            text-shadow: 0 0 8px #66fcf1;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Mesa de Som Virtual ⚡</h1>
+    <p>Clique nos blocos para soltar os graves e agudos</p>
+
+    <div class="grid">
+        <button class="pad kick" onclick="playSound('kick', this)">Bumbo</button>
+        <button class="pad snare" onclick="playSound('snare', this)">Caixa</button>
+        <button class="pad hihat" onclick="playSound('hihat', this)">Prato</button>
+        
+        <button class="pad synth1" onclick="playSound('synth1', this)">Synth A</button>
+        <button class="pad synth2" onclick="playSound('synth2', this)">Synth B</button>
+        <button class="pad synth3" onclick="playSound('synth3', this)">Synth C</button>
+        
+        <button class="pad laser" onclick="playSound('laser', this)">Laser</button>
+        <button class="pad bass" onclick="playSound('bass', this)">Sub-Grave</button>
+        <button class="pad alarm" onclick="playSound('alarm', this)">Sirene</button>
+    </div>
+
+    <div id="visualizer"></div>
+
+    <script>
+        // Inicializa o contexto de áudio do navegador na primeira interação
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type, element) {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            // Efeitos visuais no clique
+            element.classList.add('hit');
+            document.getElementById('visualizer').innerText = `🎶 TOCANDO: ${element.innerText}`;
+            setTimeout(() => {
+                element.classList.remove('hit');
+            }, 150);
+
+            // Biblioteca de sons gerados via código matemático (sintetizador puro)
+            switch(type) {
+                case 'kick':
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    gain.gain.setValueAtTime(1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    break;
+
+                case 'snare':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(180, now);
+                    gain.gain.setValueAtTime(0.7, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    break;
+
+                case 'hihat':
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(10000, now);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                    break;
+
+                case 'synth1':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(261.63, now); // Nota Dó
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+
+                case 'synth2':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(329.63, now); // Nota Mi
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+
+                case 'synth3':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(392.00, now); // Nota Sol
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+
+                case 'laser':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(880, now);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.5);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                    break;
+
+                case 'bass':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(60, now);
+                    gain.gain.setValueAtTime(0.8, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                    break;
+
+                case 'alarm':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(800, now + 0.2);
+                    osc.frequency.linearRampToValueAtTime(400, now + 0.4);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
