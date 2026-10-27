@@ -1,0 +1,43 @@
+import json
+import os
+
+DB_FILE = "database.json"
+
+def inicializar_banco():
+    if not os.path.exists(DB_FILE):
+        with open(DB_FILE, "w") as f:
+            json.dump({"transactions": []}, f)
+        print("Banco de dados simulado inicializado.")
+
+def processar_transacao(transaction_id, account_id, amount, description):
+    inicializar_banco()
+    
+    with open(DB_FILE, "r") as f:
+        data = json.load(f)
+    
+    # 🚨 MOTOR DE IDEMPOTÊNCIA: Bloqueia IDs duplicados
+    for existing_tx in data["transactions"]:
+        if existing_tx["transaction_id"] == transaction_id:
+            print(f"❌ BLOQUEADO: Cobrança dupla detectada para o ID: {transaction_id}")
+            return {"status": "Erro", "message": "Duplicado"}
+    
+    nova_transacao = {
+        "transaction_id": transaction_id,
+        "account_id": account_id,
+        "amount": amount,
+        "description": description
+    }
+    data["transactions"].append(nova_transacao)
+    
+    with open(DB_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+        
+    print(f"✅ SUCESSO: Transação {transaction_id} processada com sucesso!")
+    return {"status": "Sucesso"}
+
+# --- ÁREA DE TESTES ---
+print("--- Teste 1: Enviando transação pela primeira vez ---")
+processar_transacao("req_123", "acc_99", 250.00, "Assinatura Mensal")
+
+print("\n--- Teste 2: Enviando o MESMO ID novamente (Simulando clique duplo) ---")
+processar_transacao("req_123", "acc_99", 250.00, "Assinatura Mensal")
