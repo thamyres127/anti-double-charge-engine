@@ -1,0 +1,28 @@
+{
+  "contratos_cancelados": [
+    {
+      "client_id": "CLI_7701",
+      "nome": "Carlos Eduardo Santos",
+      "data_cancelamento": "2026-08-14",
+      "motivo": "Encerramento Voluntário de Conta",
+      "status_legado": "Ativo no Engine de Faturamento Mensal",
+      "valor_indevido": 249.90
+    },
+    {
+      "client_id": "CLI_7702",
+      "nome": "Mariana Souza Oliveira",
+      "data_cancelamento": "2026-09-02",
+      "motivo": "Migração de Portabilidade de Crédito",
+      "status_legado": "Flag de Cobrança Automática Ativa no Ledger",
+      "valor_indevido": 89.90
+    },
+    {
+      "client_id": "CLI_7703",
+      "nome": "Roberto Azevedo Lima",
+      "data_cancelamento": "2026-09-20",
+      "motivo": "Cancelamento por Quebra Contratual",
+      "status_legado": "Fila Batch de Cartão de Crédito Não Sincronizada",
+      "valor_indevido": 412.00
+    }
+  ]
+}
